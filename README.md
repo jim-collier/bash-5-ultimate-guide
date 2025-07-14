@@ -25,9 +25,9 @@
 ![Status: Failing](https://img.shields.io/badge/Status-Failing-red)
 -->
 
-# Bash 5 style guide
+# Bash 5 style and performance guide
 
-The Bash 5 style guide exists in this repo as [CODE_STYLE.md](https://github.com/jim-collier/bash_v5_code-style/blob/main/CODE_STYLE.md)
+The Bash 5 style and performance guide exists in this repo as [CODE_STYLE.md](https://github.com/jim-collier/bash_v5_code-style/blob/main/CODE_STYLE.md)
 
 ## Copyright and license
 

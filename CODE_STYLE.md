@@ -25,13 +25,13 @@
 ![Status: Failing](https://img.shields.io/badge/Status-Failing-red)
 -->
 
-# Bash 5 coding style<!-- omit from toc -->
+# Bash 5 coding style and performance guide<!-- omit from toc -->
 
-This project currently lives on [github.com/jim-collier/bash_v5_code-style](https://github.com/jim-collier/bash_v5_code-style).
 
 ## Table of contents<!-- omit from toc -->
 - [Introduction](#introduction)
 - [What about macOS and BSD](#what-about-macos-and-bsd)
+- [When to break from the style guide](#when-to-break-from-the-style-guide)
 - [Other style guides](#other-style-guides)
 - [Tabs or spaces](#tabs-or-spaces)
 - [Returning values from a function](#returning-values-from-a-function)
@@ -41,14 +41,16 @@ This project currently lives on [github.com/jim-collier/bash_v5_code-style](http
 	- [Method 4: Per-function global "return value" variables 😢](#method-4-per-function-global-return-value-variables-)
 	- [Method 5: By literal variable *name*, `eval`, and *indirect parameter expansion* 😱](#method-5-by-literal-variable-name-eval-and-indirect-parameter-expansion-)
 	- [Honorable mentions ✋](#honorable-mentions-)
+- [Loops...](#loops)
+	- [...and general performance considerations](#and-general-performance-considerations)
 - [Why `set -e` is so unforgivably broken, and why you might consider using it anyway \[WIP\]](#why-set--e-is-so-unforgivably-broken-and-why-you-might-consider-using-it-anyway-wip)
 - [Copyright and license](#copyright-and-license)
 
 ## Introduction
 
-Bash 5 coding standards also cover 4.3+, as the additional features of 5 don't involve coding style changed.
+This Bash 5 coding style and performance guide also covers 4.3+, as the additional features of 5 don't involve much that affects these two things.
 
-In most cases, there's no good reason to not code to 4.3+/5 features. There's too much pain involved with trying to write to < 4.3 or especially 3. (In that case you might as well just write POSIX-only Bourne Shell  scripts, for guaranteed maximum compatibility/portability.)
+In most cases, there's no good reason to *not* code to 4.3+/5 features. There's too much pain involved with trying to write to < 4.3 or especially 3. (In that case you might as well just write POSIX-only Bourne Shell  scripts, for guaranteed maximum compatibility/portability.)
 
 Version >= 4.3 has been standard in almost all Linux distributions since 2017.
 
@@ -60,6 +62,23 @@ Version 3.2 (2007) is still the default on macOS at least up to Sequoia and prob
 In most cases, we can't or shouldn't be held hostage by Darwin's ancient default tooling. (But if you are: again, consider just writing for Bourne Shell. [Or `sh` linked to `bash` 3.2 in POSIX mode, in the case of Darwin.])
 
 As for BSD distros, they typically don't even include Bash by default, although its available. So again for maximum cross-platform compatibility you can target POSIX/Bourne (typically `sh` linked to `ash` or `pdksh` on BSD).
+
+
+## When to break from the style guide
+
+Assuming you adopt this (or any) coding style guide in the first place, there are plenty of good reasons to break it, such as:
+
+- Clarity > Consistency: Guides are generalizations of most common cases - and usually limited to the authors' experience and imagination. If, in a specific context, breaking from the guide leads to much better clarity/maintainability - do it.
+
+- Performance: While premature performance optimization is generally considered to be a cardinal sin, this may not always be true; for example, in the case of tightly nested loops that are central and critical to the entire premise of a script. Bash loops alone can actually perform "pretty well" - unless in the innermost circle, you're doing things that Bash is known to be slow at - for millions or billions of iterations. If you're doing such slow things in order to satisfy a style guide, you should probably just do whatever needs to be done to move things along.
+
+- To work around tooling limitations or bugs. Linters, for example, can get pretty cranky. Sometimes it's easier/better to just compromise and do what they say, than to disable a certain check.
+
+- Domain-specific conventions may require breaking from the guide - and even using a different style than the rest of a template.
+
+- Minification or quasi-minification. This author's own template has numerous examples of this, to avoid the file being ten times the vertical size. (But only for exhaustively tested, battle-hardened code that is already well-documented how to use. In which case they might as well be thought of as being in a compiled dynamic linked library. But even so, the functions are still in a quasi-readable format, with meaningful identifier names, and can be easily unminified by hand for maintenance/enhancement.)
+
+- Because you are a seasoned pro, able to explain and justify to a team (or to anyone reading in comments), how and why you are deliberately diverging from the style guide you otherwise said you were going to follow.
 
 
 ## Other style guides
@@ -179,18 +198,20 @@ echo "Repeated: '${myVal}'"
 ~~~
 
 **Pros**:
-- No risk of ruining the return value, with spurious output to `stdout` (as with the once-very common Method 3).
+- No risk of ruining the return value with spurious output to `stdout` (as with the once-very common Method 3).
 - Can even output to `stdout` on purpose, e.g. for long-running status messages.
 - Debugging is easier.
 - Can return multiple values to multiple variables at once this way.
+- Faster in loops (compared to Method 3), since no subproces are spawned.
 
 **Cons**:
 - It's obviously a dangerous habit for a "normal" programming language, for a function to deliberately overwrite the input with output - but none of this is "normal". Remember the balance we're trying to strike, noted above.
 - More verbose for caller.
-- Necessarily cannot protect caller's scope from the function's side-effects, by invoking in a subshell. (Which is usually not a deal-breaker for Bash scripts - there are already so many tradeoffs.)
+- Necessarily cannot protect caller's scope from the function's side-effects, by invoking in a subshell. (But which is slower.)
 
 **Use when**:
 - The output is obviously the same "thing" as the input, and callers would probably just wind up overwriting their own input variable themselves with the function output anyway, with little or no validation. (E.g. low-stakes string cleanup.) This arguably covers most typical Bash function use-cases.
+- You need to go as fast as possible, e.g. in a nested loop (and you can't reasonably inline the code inside the loop).
 
 
 ### Method 2: By *nameref* variable for output, but with separate read-only input 🤓
@@ -246,14 +267,17 @@ fRepeat(){ echo "${1} ${1}!"; }
 - Feels the most "natural" for regular programmers.
 
 **Cons**:
-- Can't output anything else to `stdout` in the function, which might not work for long-running functions that need to show status (and which by convention shouldn't go to `stderr`).
-- Calling invokes a subshell. That's usually good to protect parent's scope from function's side-effects (and general separation of concerns), but not good if it's part of a collection of closely-related helper functions that share a parent function's state, to help organize code.
+- You can't output anything else to `stdout` in the function, which might not work for long-running functions that need to show status (and which by convention shouldn't go to `stderr`).
+- Calling invokes a subshell. Which is another whole OS process.
+	- That's usually good to protect parent's scope from the function's side-effects (and general separation of concerns), but it's not good if the function is part of a collection of closely-related helper functions that share a parent function's state, to help organize code.
+	- It can be significantly slower especially if iterated millions or billions of times in a nested loop.
 - You *must* remember to send errors and debugging to a logfile and/or stderr, so that the return value is not polluted.
-- Even then, it's still easy to accidentally pollute the return value in longer functions calling multiple external programs you have little control over, including weird future edge cases you don't even know should be, if even *could* be, unit-tested.
+	- Even then, it's still easy to accidentally pollute the return value in longer functions calling multiple external programs you have little control over, including weird future edge cases you don't even know should be, if even *could* be, unit-tested.
 
 **Use when**:
-- A short function that returns a single value, and
-- has minimal internal dependencies.
+- A short function that returns a single value, *and*
+- has minimal internal dependencies, *and*
+- is not iterated over more than millions of times in a loop.
 
 You should append "_ByEcho" (or something consistent) to the function name, to indicate the different way of dealing with this non-default function type.
 
@@ -381,11 +405,45 @@ There may be specific appropriate use-cases though, especially involving long-ru
 				## And maybe even some logic to delete /dev/shm/myscript.sh if
 				##   now empty.
 				~~~
-			- And while the actual usage pattern would be much less verbose than that (only two lines in this case), in general this would be a solution to a problem I can't imagine any sane person or project having.
+			- And while the actual usage pattern would be much less verbose than that (only three lines in this case), in general this would be a solution to a problem I can't imagine any sane person or project having.
 
+
+## Loops...
+
+### ...and general performance considerations
+
+Regardless of the language, inside long-running loops are usually where performance is won or lost, and is generally the first place to look for performance problems (at least without proper profiling tools). This is particularly true with Bash.
+
+While Bash loops can be surprisingly fast for an interpreted scripting language that does no read-ahead optimization or just-in-time compilation, there are things you can do inside a loop that can and will drag performance to its knees.
+
+While some of these may be necessary to the whole point of your script, try to observe these recommendations and avoid performance killers:
+
+- Try to avoid spawning subprocesses. It's computationally expensive in any language. (And to the OS kernel itself.)
+	- Avoid the use of `$(...)`, which spawns a new subprocess - even just to evaluate the `echo`ed result of one of your own functions.
+	- Any use of external tools such as `grep`, `awk`, `sed`, etc., also spawns a new process.
+	- External tools often invoke at least *two* or more processes, if invoked inside `$()`, as is sometimes necessary. (But often done so unnecessarily, out of "convention" or lack of awareness of how to avoid it.) And often enough, multiple tools are piped together - each spawning a subprocess.
+		- Those are powerhouse tools that are practically essential in some scripts, but consider if you really need to use each occurrence, inside long-running loops.
+		- See if you can batch up the data to run the external tools on them outside the loop.
+		- On the other hand: if you're dealing with massive amounts of string or filesystem data, the cost of one or two subprocesses may easily justify the potentially massive performance gains of using such tools, rather than (for example) tediously looping through a large file line-by-line in Bash. But when that happens, it's usually outside of a loop anyway.
+- Try to use Bash's native variable-based string manipulation features, rather than creating one or more subprocesses for `sed` (or worse, for a whole pipeline).
+- Try to avoid arithmetic - such as counter incrementing.
+	- Even C-style loop construct counter incrementing involves a performance hit: `for...in` style loops can be up to 30% faster.
+- Instead of incremental file I/O inside a loop, gather up all the changes in one or more strings or arrays, then perform the file I/O all at once, outside the loop.
+- Avoid using associative arrays in loops, especially modifying them.
+	- If your goal is to simulate a "record:field" or "index.property" type scenario, consider instead multiple regular arrays with synced integer indexes.
+	- Associative arrays use hash tables, which are slower. Bash indexed arrays are C arrays internally.
+	- You can abstract CRUD operations on multiple synced index arrays, within a family of (for example) custom functions named `*_Add()`, `*_Get()`, `*_Update()`, `*_Detele()`. (Unless the loop iterates billions of times, in which case you might wish to inline the work.)
+- Append data to arrays rather than strings, inside a highly iterative loop. (Even if you need a single string at the end, outside of the loop.)
+	- Every modification to a string involves making at least one copy of the whole thing. Appending an element to an array only involves that amount of data.
+- If the loop will be into the millions or billions of iterations, try to in-line as much of the code as reasonable, to avoid calling functions.
+	- While calling functions, setting up the variables inside, and copying data to argument variables isn't necessarily a performance death-blow, it *is* inherently more expensive than doing the work in-line.
+	- But if the loop will never be iterated that long, the cost to readability by inlining everything probably isn't worth it. Everything is a tradeoff.
+- If you do call functions for code clarity and organization, make some effort to minimize the arguments copied by value, if called within a highly iterative loop.
+	- Either the function should intentionally have access to caller's variables (which it will anyway if not invoked in a subshell), or pass the variables by *nameref*. The latter helps with separation of concerns, while neither provides much isolation and safety.
 
 <!--
-## Loops...
+
+### ...and subshells
 
 
 ### ...with multiline string variables [to-do]
@@ -411,7 +469,7 @@ There may be specific appropriate use-cases though, especially involving long-ru
 
 ## Why `set -e` is so unforgivably broken, and why you might consider using it anyway [WIP]
 
-[This](https://mywiki.wooledge.org/BashFAQ/105/Answers) article outlines excellent objective reasons why `set -e` is essentially broken in its apparent design, and as a result works unreliably inconsistently in Bash. But why you might consider using it anyway.
+[This](https://mywiki.wooledge.org/BashFAQ/105/Answers) article outlines excellent objective reasons why `set -e` is essentially broken in its apparent design, and as a result is unreliably and inconsistent in Bash. But you might consider using it anyway.
 
 
 ## Copyright and license
