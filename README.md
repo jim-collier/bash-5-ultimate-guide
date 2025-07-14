@@ -25,4 +25,11 @@
 ![Status: Failing](https://img.shields.io/badge/Status-Failing-red)
 -->
 
-The Bash 5 style guide exists here as [CODE_STYLE.md](https://github.com/jim-collier/bash_v5_code-style/blob/main/CODE_STYLE.md)
+# Bash 5 style guide
+
+The Bash 5 style guide exists in this repo as [CODE_STYLE.md](https://github.com/jim-collier/bash_v5_code-style/blob/main/CODE_STYLE.md)
+
+## Copyright and license
+
+> © 2025 Jim Collier (bdYkHbGhCRb82V_TrJ0uLoPemb2EG5pbMNhBkYhb4BI=)<br>
+> Licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International \([CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)\)
