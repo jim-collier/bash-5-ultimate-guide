@@ -41,7 +41,7 @@ This project currently lives on [github.com/jim-collier/bash_v5_code-style](http
 	- [Method 4: Per-function global "return value" variables 😢](#method-4-per-function-global-return-value-variables-)
 	- [Method 5: By literal variable *name*, `eval`, and *indirect parameter expansion* 😱](#method-5-by-literal-variable-name-eval-and-indirect-parameter-expansion-)
 	- [Honorable mentions ✋](#honorable-mentions-)
-- [Why `set -e` is so unforgivably bad, and why you might consider using it anyway \[WIP\]](#why-set--e-is-so-unforgivably-bad-and-why-you-might-consider-using-it-anyway-wip)
+- [Why `set -e` is so unforgivably broken, and why you might consider using it anyway \[WIP\]](#why-set--e-is-so-unforgivably-broken-and-why-you-might-consider-using-it-anyway-wip)
 - [Copyright and license](#copyright-and-license)
 
 ## Introduction
@@ -84,7 +84,7 @@ But even "silly" has to be taken in context. The parts this author finds the mos
 
 For example: Google's "two space indentation" rule: Like, what the heck man, that's ridiculous. But we have to remember, this guide was only for their *own* internal consistency across innumerable code-bases, and going back to to their start in the 90s. In 1999, they were coding on - at best - 17" 4:3 CRTs with 1024x768 resolution.
 
-There's no good reason modern non-Google programmers should observe such a rule. In fact, it could encourge (or at least fail to discourage) bad code practices such as over-nesting (which is covered in *this* guide.)
+There's no good reason modern non-Google programmers should observe such a rule. In fact, it could encourage (or at least fail to discourage) bad code practices such as over-nesting (which is covered in *this* guide.)
 
 Some studies (e.g. [Bauer et al. 2019](https://www.researchgate.net/publication/335497893_Indentation_Simply_a_Matter_of_Style_or_Support_for_Program_Comprehension)) suggest that 4 spaces improve code readability, but arguably there just aren't yet any high-quality, conclusive studies on the matter.
 
@@ -282,7 +282,7 @@ echo "Repeated: '${_fRepeat_RetVal}'"
 - Reentrant calls to the same function will clobber higher-nested return values.
 - Adds clutter to the global namespace.
 - Adds another unique class of bug, where new functions alter the global return value of an older existing function, between the time the intended function sets it, and returns control to the caller (e.g. by a sub-function that the function calls itself).
-	- How would that even possible? Programmer mistake. Example 1: The "copy-paste then modify similar code" routine and forget to change that variable (we all do it even though its bad practice). Example 2: pragrammer-based autocorrect mistake.
+	- How would that even possible? Programmer mistake. Example 1: The "copy-paste then modify similar code" routine and forget to change that variable (we all do it even though its bad practice). Example 2: programmer-based autocorrect mistake.
 	- Such bugs are subtle and can be tricky to track down, especially with lack of live debugging and automatic all-variable inspection.
 
 **Use when**:
@@ -294,7 +294,7 @@ echo "Repeated: '${_fRepeat_RetVal}'"
 This method is almost identical in concept to Method 1, but works on Bash as old as v2 (1996).
 
 However, this method requires the abuse of `eval` to work, which is bad, because:
-- Makes things harder to debug.
+- It makes things harder to debug.
 - Can introduce impossible quoting conundrums.
 - Unless you control *all* direct *and* indirect input to `eval` with absolute certainty, it introduces a potentially glaring (and potentially trivially-exploitable) security risk of arbitrary code-injection.
 
@@ -330,48 +330,58 @@ There is also an `eval` version of Method 2, but you get the idea.
 
 Arguably, none of these are better options than a contextually-appropriate choice among the first three, for normal script functions.
 
-There may be specific approprite use-cases though, especially involving long-running cross-script IPC, where one of these might make more sense.
+There may be specific appropriate use-cases though, especially involving long-running cross-script IPC, where one of these might make more sense.
 
 - Named pipes
 	- Clumsy and verbose for "normal" functions.
 	- Extra overhead to make sure pipes aren't already open, and to make sure they get closed.
-	- Requires care to cleanup closed socket descriptors on the filesystem, including on error-handling.
+	- Requires care to cleanup closed pipe descriptors on the filesystem, including on error-handling.
 	- Exposes data to other places on the system.
-	- You could - and probably should for safety - abstract much of this work to one or more dedicated toolbox functions. But that would even further slow down long-running nested loops.
+	- You could - and probably should for safety - abstract much of this work to one or more dedicated toolbox functions. But that would even further complexify and slow down long-running nested loops.
 
 - File descriptor redirection. (E.g. above `&1` for `stdout` and `&2` for `stderr`. To be safe in Bash, these would be between `&10` and `&1024`.)
 	- As clumsy and verbose as using named pipes for "normal" functions.
-	- It would probably be a good idea to use unique descriptors per-function instance, so that functions calling each other don't clobber each others' data. However in Bash, by default, you only have 1,014 "safe" descriptors available per-process. This could get pretty hairy, especially for inherently reentrant functions.
+	- You would have to use unique descriptors per-function instance, so that functions calling each other don't clobber each others' data. However in Bash, by default, you only have 1,014 "safe" descriptors available per-process. When you consider reentrant functions, then things start getting complicated.
 	- Extra overhead to make sure descriptors aren't already open, and to make sure they get closed.
 	- Two major benefits over named pipes:
 		- Doesn't expose data to external locations on the system.
-		- Doesn't leave lingering socket descriptors on the filesystem.
-	- Same potential for handing off to toolbox functions - which further increases the web of complexity.
+		- Doesn't leave lingering pipe descriptors on the filesystem.
+	- Same potential for handing off to toolbox functions - which further increases the web of nested complexity.
 
 - UNIX domain sockets
 	- Requires the use of an external program such as `socat`.
 	- Might be exactly appropriate for complex IPC, across hosts, and/or involving multiple listeners - but total overkill for the traditional concept of a "function".
+	- You'd know it if you needed to use sockets, it would not be a subtle question.
 
 - Writing to and reading from a temp file, e.g. on memory-backed `/dev/shm` which almost all distros have, to cover in part such crude forms of IPC.
-	- Although conceptually more crude, and still clumsy, it could be less visually cluttered than using named pipes or file descriptors. And not much slower.
-	- If you forget to clean-up, the tmp files only persist until next reboot. (Though you could also create named-pipe descriptors on `/dev/shm` as well.)
-	- As with named-pipes, it would probably be wise to hand off lifecycle management to a family of functions.
-		- But more complicated, as each potentially simultaneously running nested call to each unique function in the script, in each potentially concurrently running instance of any script with the same toolbox functions - would need its own tmp file (as probably the fastest solution among more complicated).
+	- Although conceptually more crude, and still clumsy, it could be less visually cluttered than using named pipes or file descriptors. And by testing, not much slower.
+	- If you forget to clean-up, the tmp files only persist until next reboot. (Though to be fair you could also create named pipe descriptors on `/dev/shm` as well.)
+	- As with named pipes, it would probably be wise to hand off lifecycle management to a family of functions.
+		- But more complicated, as each potentially simultaneously running nested call to each unique function in the script, in each potentially concurrently running instance of any script with the same toolbox functions - would need its own tmp file. (As probably the simplest and fastest solution among far more complicated ideas that start getting into "light database" territory.)
 			- At that point it would probably make sense for the caller to provide an on-the-spot generated GUID-based IPC tmp filespec, before calling every such function, so that every possible instance of every function across time and space, will have its own unique file to write to. From the caller's perspective, this might look something like:
 				~~~
 				ipc_Filespec="$(fIPC_GetFilespec)"
-					## $ipc_Filespec might now look something like:
-					## "/dev/shm/myscript.sh/UqrGtfE/RFx4ZWRQs03PQe7HA0Y0P.tmp"
+
+				## The variable ${ipc_Filespec} might now look something like:
+				## "/dev/shm/myscript.sh/UqrGtfE/RFx4ZWRQs03PQe7HA0Y0P.tmp"
+				## With the running script instance given its own encoded subdir,
+				##   and this unique function instance given its own tmp file.
 
 				fRepeat "${$ipc_Filespec}" "Mayday"
 				echo "Repeated: '$(ipc_EchoValAndRmFile "${$ipc_Filespec}")'"
 
-				## Longer-running processes with repeated calls might just `cat` the file for results, and delete it later.
+				## Longer-running processes with repeated calls might just `cat`
+				##   the file for results, and delete it later.
 
-				## Be sure to add to err trap:
-				{ [[ -n "" ]] && [[ -d "/dev/shm/myscript.sh/${ipc_ScriptInstance}" ]]; } && rm -rf "/dev/shm/myscript.sh/${ipc_ScriptInstance}"
-				## Where the "${ipc_ScriptInstance}" subdirectory is created on first call to fIPC_GetFilespec().
+				## Be sure to add to err trap somewhere to delete this script
+				##   instance's entire subfolder:
+				if [[ -n "" ]] && [[ -d "/dev/shm/myscript.sh/${ipc_ScriptInstance}" ]]; then
+					rm -rf "/dev/shm/myscript.sh/${ipc_ScriptInstance}"
+				fi
+				## And maybe even some logic to delete /dev/shm/myscript.sh if
+				##   now empty.
 				~~~
+			- And while the actual usage pattern would be much less verbose than that (only two lines in this case), in general this would be a solution to a problem I can't imagine any sane person or project having.
 
 
 <!--
@@ -384,7 +394,7 @@ There may be specific approprite use-cases though, especially involving long-run
 ### ...with file contents [to-do]
 
 
-## ...through filesytem structure [to-do]
+## ...through filesystem structure [to-do]
 
 
 ## Arrays [to-do]
@@ -399,9 +409,9 @@ There may be specific approprite use-cases though, especially involving long-run
 ## Minification [to-do]
 -->
 
-## Why `set -e` is so unforgivably bad, and why you might consider using it anyway [WIP]
+## Why `set -e` is so unforgivably broken, and why you might consider using it anyway [WIP]
 
-[This](https://mywiki.wooledge.org/BashFAQ/105/Answers) article outlines excellent objective reasons why `set -e` is terribly flawed and inconsistent in Bash.
+[This](https://mywiki.wooledge.org/BashFAQ/105/Answers) article outlines excellent objective reasons why `set -e` is essentially broken in its apparent design, and as a result works unreliably inconsistently in Bash. But why you might consider using it anyway.
 
 
 ## Copyright and license
