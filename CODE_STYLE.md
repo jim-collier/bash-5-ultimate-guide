@@ -34,15 +34,6 @@ This project currently lives on [github.com/jim-collier/bash_v5_code-style](http
 - [What about macOS and BSD](#what-about-macos-and-bsd)
 - [Other style guides](#other-style-guides)
 - [Tabs or spaces](#tabs-or-spaces)
-- [Naming convention \[to-do\]](#naming-convention-to-do)
-- [Code organization \[to-do\]](#code-organization-to-do)
-- [Function structure \[to-do\]](#function-structure-to-do)
-- [Indentation levels \[to-do\]](#indentation-levels-to-do)
-- [Arguments \[to-do\]](#arguments-to-do)
-- [Constants \[to-do\]](#constants-to-do)
-- [Variables \[to-do\]](#variables-to-do)
-- [Comments \[to-do\]](#comments-to-do)
-- [What to wrap in a function and what not to \[to-do\]](#what-to-wrap-in-a-function-and-what-not-to-to-do)
 - [Returning values from a function](#returning-values-from-a-function)
 	- [Method 1: By *nameref* variable, function transforms input directly into output in-situ 😏](#method-1-by-nameref-variable-function-transforms-input-directly-into-output-in-situ-)
 	- [Method 2: By *nameref* variable for output, but with separate read-only input 🤓](#method-2-by-nameref-variable-for-output-but-with-separate-read-only-input-)
@@ -50,14 +41,6 @@ This project currently lives on [github.com/jim-collier/bash_v5_code-style](http
 	- [Method 4: Per-function global "return value" variables 😢](#method-4-per-function-global-return-value-variables-)
 	- [Method 5: By literal variable *name*, `eval`, and *indirect parameter expansion* 😱](#method-5-by-literal-variable-name-eval-and-indirect-parameter-expansion-)
 	- [Honorable mentions ✋](#honorable-mentions-)
-- [Loops...](#loops)
-	- [...with multiline string variables \[to-do\]](#with-multiline-string-variables-to-do)
-	- [...with file contents \[to-do\]](#with-file-contents-to-do)
-- [...through filesytem structure \[to-do\]](#through-filesytem-structure-to-do)
-- [Arrays \[to-do\]](#arrays-to-do)
-- [Associative arrays \[to-do\]](#associative-arrays-to-do)
-- [Error-handling \[to-do\]](#error-handling-to-do)
-- [Minification \[to-do\]](#minification-to-do)
 - [Why `set -e` is so unforgivably bad, and why you might consider using it anyway \[WIP\]](#why-set--e-is-so-unforgivably-bad-and-why-you-might-consider-using-it-anyway-wip)
 - [Copyright and license](#copyright-and-license)
 
@@ -138,7 +121,7 @@ All that having been said, this style guide calls for:
 - You hate the Tab and wish it was never born.
 - You just prefer spaces over tabs.
 
-
+<!--
 ## Naming convention [to-do]
 
 
@@ -164,7 +147,7 @@ All that having been said, this style guide calls for:
 
 
 ## What to wrap in a function and what not to [to-do]
-
+-->
 
 ## Returning values from a function
 
@@ -391,6 +374,7 @@ There may be specific approprite use-cases though, especially involving long-run
 				~~~
 
 
+<!--
 ## Loops...
 
 
@@ -413,7 +397,7 @@ There may be specific approprite use-cases though, especially involving long-run
 
 
 ## Minification [to-do]
-
+-->
 
 ## Why `set -e` is so unforgivably bad, and why you might consider using it anyway [WIP]
 
