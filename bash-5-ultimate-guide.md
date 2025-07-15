@@ -59,7 +59,7 @@ Many of these concepts are just regular best-practices of programming in general
 	- [Honorable mentions ✋](#honorable-mentions-)
 - [Performance](#performance)
 - [Loops...](#loops)
-- [Why `set -e` is so unforgivably broken, and why you might consider using it anyway \[WIP\]](#why-set--e-is-so-unforgivably-broken-and-why-you-might-consider-using-it-anyway-wip)
+- [Why `set -e` is inconsistent and unreliable, how to mitigate it, and why you should use it anyway \[WIP\]](#why-set--e-is-inconsistent-and-unreliable-how-to-mitigate-it-and-why-you-should-use-it-anyway-wip)
 - [Copyright and license](#copyright-and-license)
 
 ## Why Bash 5?
@@ -524,9 +524,11 @@ In rough approximate order of inner-loop performance killing-ness:
 ## Minification [to-do]
 -->
 
-## Why `set -e` is so unforgivably broken, and why you might consider using it anyway [WIP]
+## Why `set -e` is inconsistent and unreliable, how to mitigate it, and why you should use it anyway [WIP]
 
-[This](https://mywiki.wooledge.org/BashFAQ/105/Answers) article outlines excellent objective reasons why `set -e` is essentially broken in its apparent design, and as a result is unreliably and inconsistent in Bash. But you might consider using it anyway.
+[This](https://mywiki.wooledge.org/BashFAQ/105/Answers) article outlines excellent objective reasons why `set -e` seems broken in its apparent basic design, and as a result is unreliable and inconsistent in Bash.
+
+But here's how to mitigate every one of the (valid) expressed concerns, and why the alternative is worse.
 
 
 ## Copyright and license

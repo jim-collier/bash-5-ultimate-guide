@@ -1,33 +1,40 @@
 # To-do
 
-| Created     | Issue# |Pri| Started     | by  | Completed     | Description | Notes |
-|-------------|--------|---|-------------|-----|---------------|-------------|-------|
-| 20250713    |        | 3 |             |     |               | Code organization
-| 20250713    |        | 3 |             |     |               | ••• Compact style
-| 20250713    |        | 3 |             |     |               | ••• Functions
-| 20250713    |        | 3 |             |     |               | •••••• How to decide what to put in a function, vs leave in-line
-| 20250713    |        | 3 |             |     |               | •••••• Minimize indentation levels by bailing early
-| 20250713    |        | 3 |             |     |               | ••• Comments
-| 20250713    |        | 3 |             |     |               | Special consideration: *nameref* variables
-| 20250713    |        | 3 |             |     |               | ••• Naming convention and collision avoidance
-| 20250713    |        | 3 |             |     |               | ••• Error-handling
-| 20250713    |        | 3 |             |     |               | Naming convention
-| 20250715    |        | 3 |             |     |               | Performance
-| 20250715    |        | 3 |             |     |               | ••• Add an indicators for each reco: relative speed boost, and sacrifice in capability for speed
-| 20250715    |        | 3 |             |     |               | ••• Replace `sed` commands with Bash variable string manipulation.
-| 20250715    |        | 3 |             |     |               | ••• Group adjacent `sed` commands into one.
-| 20250715    |        | 3 |             |     |               | ••• Avoid unnecessary use of e.g. 'true' and ':' (subprocces)
-| 20250715    |        | 3 |             |     |               | Decision structures
-| 20250715    |        | 3 |             |     |               | ••• Always use double brackets
-| 20250715    |        | 3 |             |     |               | ••• Safe ternary operators with braces
-| 20250713    |        | 3 |             |     |               | Loops
-| 20250713    |        | 3 |             |     |               | ••• with multiline string variables
-| 20250713    |        | 3 |             |     |               | ••• with file contents
-| 20250713    |        | 3 |             |     |               | Arrays
-| 20250713    |        | 3 |             |     |               | Associative arrays
-| 20250715    |        |   |             |     |               | Error-handling
-<!--
-| 20250711    |        |   |             |     |               |
+| Created  | Issue# |Pri| Started  | by  | Completed | Description | Notes |
+|----------|--------|-- |----------|-----|-----------|-------------|-------|
+| 20250713 |        | 3 |          |     |           | Code organization
+| 20250713 |        | 3 |          |     |           | ••• Multi-file, multi-developer
+| 20250713 |        | 3 |          |     |           | ••• Compact style
+| 20250713 |        | 3 |          |     |           | Naming convention
+| 20250713 |        | 3 |          |     |           | Quoting
+| 20250713 |        | 3 |          |     |           | Comments
+| 20250713 |        | 3 |          |     |           | Error-handling
+| 20250715 |        |   |          |     |           | ••• `set -eE; set -o pipefail; shopt -s inherit_errexit 2>/dev/null \|\| true`
+| 20250715 |        |   |          |     |           | •••••• Not `set -u` because: 
+| 20250713 |        | 3 |          |     |           | Functions
+| 20250713 |        | 3 |          |     |           | ••• How to decide what to put in a function, vs leave in-line
+| 20250713 |        | 3 |          |     |           | ••• The `function` keyword
+| 20250713 |        | 3 |          |     |           | ••• Arguments
+| 20250713 |        | 3 |          |     |           | •••••• Default values, required|optional, bool/integer validation, error-handling
+| 20250713 |        | 3 |          |     |           | •••••• To option flags or not [not]
+| 20250713 |        | 3 |          |     |           | •••••• Special consideration: *nameref* arguments
+| 20250713 |        | 3 |          |     |           | ••• Minimize indentation levels by bailing early
+| 20250715 |        | 3 |          |     |           | Performance
+| 20250715 |        | 3 |          |     |           | ••• Add an indicator for each reco: relative speed boost, and sacrifice in capability for speed
+| 20250715 |        | 3 |          |     |           | ••• Replace `sed` commands with Bash variable string manipulation.
+| 20250715 |        | 3 |          |     |           | ••• Group adjacent `sed` commands into one.
+| 20250715 |        | 3 |          |     |           | ••• Avoid unnecessary use of e.g. `true` and `:` (subprocces)
+| 20250715 |        | 3 |          |     |           | Decision structures
+| 20250715 |        | 3 |          |     |           | ••• Always use double brackets
+| 20250715 |        | 3 |          |     |           | ••• Safe ternary operators with braces
+| 20250713 |        | 3 |          |     |           | Loops
+| 20250713 |        | 3 |          |     |           | ••• with multiline string variables
+| 20250713 |        | 3 |          |     |           | ••• with file contents
+| 20250713 |        | 3 |          |     |           | Arrays
+| 20250713 |        | 3 |          |     |           | Associative arrays
+| 20250715 |        |   |          |     |           | Error-handling
+<!--                                                 |
+| 2025MMDD |        |   |          |     |           |
 -->
 
 ## Random text for inclusion in document
