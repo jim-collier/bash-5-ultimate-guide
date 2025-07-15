@@ -27,7 +27,14 @@
 
 # Bash 5 style and performance guide
 
-The Bash 5 style and performance guide exists in this repo as [CODE_STYLE.md](https://github.com/jim-collier/bash_v5_code-style/blob/main/CODE_STYLE.md)
+The "Bash 5 Ultimate Guide" exists in this repo as [bash-5-ultimate-guide.md](https://github.com/jim-collier/bash-5-ultimate-guide/blob/main/bash-5-ultimate-guide.md)
+
+It covers:
+
+- Style (naming, formatting, layout)
+- Pros and cons of doing things various ways (and recommendations)
+- Performance
+- Dos and don'ts
 
 ## Copyright and license
 

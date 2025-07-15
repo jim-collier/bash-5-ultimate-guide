@@ -25,11 +25,27 @@
 ![Status: Failing](https://img.shields.io/badge/Status-Failing-red)
 -->
 
-# Bash 5 coding style and performance guide<!-- omit from toc -->
+# Bash 5 Ultimate Guide<!-- omit from toc -->
+
+## Introduction<!-- omit from toc -->
+
+This isn't like many coding guides, that cover all the ways you *can* do everything in a language.
+
+It only covers the *one recommended* way to most main tasks involved with system shell scripting, specifically Bash 4.4 and 5.
+
+*(At least, ideally just one way. But if there is more than one, it explains which specific kinds of use-cases are best for different ways of doing something - especially when it comes to code performance and safety.)*
+
+Sometimes that "one recommended way" is an objectively provable thing; and sometimes it's an opinion. But in the latter case, at least they are opinions formed by twenty years and thousands of man-hours of trials, tribulations, failures, and figuring things out the hard way.
+
+And either way, nothing is taken on faith from the advice of other guides and experts, without having examined or tested their assumptions. An effort is made here to explain *why* recommendations are made.
+
+This is also not an review of the new features of Bash 5, which you can find anywhere. It simply assumes you are targeting Bash 4.4 or 5, and for example their support for *nameref* variables (i.e. `local -n`). (Which was introduced in 4.3 [2014], fixed to a production-ready state in 4.4 [2016], and further improved internally in 5 [2019].)
+
+Many of these concepts are just regular best-practices of programming in general. (Such as avoiding readability nightmares of too much nesting, by testing values and bailing as early as possible out of scripts, functions, loops, and decision structures.) Others are common to shell scripting in general. (Such as avoiding the often "hidden" creation of subprocesses when possible.) Some are unique to Bash. (E.g. powerful features such as variable-based string manupulation.)
 
 
 ## Table of contents<!-- omit from toc -->
-- [Introduction](#introduction)
+- [Why Bash 5?](#why-bash-5)
 - [What about macOS and BSD](#what-about-macos-and-bsd)
 - [When to break from the style guide](#when-to-break-from-the-style-guide)
 - [Other style guides](#other-style-guides)
@@ -41,27 +57,37 @@
 	- [Method 4: Per-function global "return value" variables 😢](#method-4-per-function-global-return-value-variables-)
 	- [Method 5: By literal variable *name*, `eval`, and *indirect parameter expansion* 😱](#method-5-by-literal-variable-name-eval-and-indirect-parameter-expansion-)
 	- [Honorable mentions ✋](#honorable-mentions-)
+- [Performance](#performance)
 - [Loops...](#loops)
-	- [...and general performance considerations](#and-general-performance-considerations)
 - [Why `set -e` is so unforgivably broken, and why you might consider using it anyway \[WIP\]](#why-set--e-is-so-unforgivably-broken-and-why-you-might-consider-using-it-anyway-wip)
 - [Copyright and license](#copyright-and-license)
 
-## Introduction
+## Why Bash 5?
 
-This Bash 5 coding style and performance guide also covers 4.3+, as the additional features of 5 don't involve much that affects these two things.
+This Bash 5 guide also covers 4.4+ (introduced in 2016), as the additional features of 5 are mostly internal and don't involve much that affects how we code.
 
-In most cases, there's no good reason to *not* code to 4.3+/5 features. There's too much pain involved with trying to write to < 4.3 or especially 3. (In that case you might as well just write POSIX-only Bourne Shell  scripts, for guaranteed maximum compatibility/portability.)
+Bash 5 was released in 2019, and has been standard in most Linux distros since 2021.
 
-Version >= 4.3 has been standard in almost all Linux distributions since 2017.
+Version >= 4.4 (compatible with 5 for the purpose of this guide) has been standard in most Linux distros since 2018.
+
+You can also use this guide for 4.3 (introduced in 2014), but it had some edge-case quirks with the then-new *nameref* variables feature (which features heavily in this guide). Those quirks could be mostly worked around, but 4.3 is only two years older than the already pretty old 4.4 - and the *real* battle over "old Bash" is over 3.2 (2007), not 4.x - so why bother?
+
+In most cases, there's no good reason to *not* code to 4.4+/5 features. There's too much pain involved with trying to write to < 4.3 or especially 3.x. In that case you might as well write POSIX-only Bourne Shell scripts, for guaranteed maximum compatibility/portability.
 
 
 ## What about macOS and BSD
 
-Version 3.2 (2007) is still the default on macOS at least up to Sequoia and probably beyond, due to GPLv3 licensing issues on Darwin. Darwin doesn't even include GNU coreutils (for the same reason), but the lesser-capable BSD variants. Anyone that is serious about scripting on Darwin, is going to rush to upgrade to Bash v5 and GNU coreutils, e.g. via `brew` - before they do anything else.
+Version 3.2 (2007) is still the default on macOS at least up to Sequoia and probably beyond, due to GPLv3 licensing issues on Darwin.
 
-In most cases, we can't or shouldn't be held hostage by Darwin's ancient default tooling. (But if you are: again, consider just writing for Bourne Shell. [Or `sh` linked to `bash` 3.2 in POSIX mode, in the case of Darwin.])
+Darwin doesn't even include GNU coreutils (for the same reason), but the lesser-capable BSD variants.
 
-As for BSD distros, they typically don't even include Bash by default, although its available. So again for maximum cross-platform compatibility you can target POSIX/Bourne (typically `sh` linked to `ash` or `pdksh` on BSD).
+Anyone that is serious about scripting on Darwin, is going to rush to upgrade to Bash v5 and GNU coreutils, e.g. via `brew` - before they do anything else.
+
+In most cases, we can't or shouldn't be held hostage by Darwin's ancient default tooling. (But if you are and have no choice: again, consider writing for Bourne Shell. [technically `sh` linked to `bash` 3.2 in POSIX mode, in the case of Darwin; and `sh` linked to `dash` on Linux.])
+
+As for BSD distros, they typically don't even include Bash by default, although its available. So again for maximum cross-platform compatibility you would target POSIX/Bourne (typically `sh` linked to `ash` or `pdksh` on BSD).
+
+In either case of macOS that you are not allowed to upgrade from Bash 3.2 and inferior BSD coreutils, or BSD UNIX without Bash >= 4.4: You may still find useful general concepts in this guide, but there will be better guides out there on how to code to Bourne Shell/POSIX-standard, which is probably your best, most compatible bet.
 
 
 ## When to break from the style guide
@@ -187,8 +213,8 @@ Let's review the only reasonable - or some commonly-used - options.
 ~~~
 ## Function
 fRepeat(){
-	local -n refVar=$1
-	refVar="${refVar} ${refVar}!"
+	local -n refVar_s7fb2=$1
+	refVar="${refVar_s7fb2} ${refVar_s7fb2}!"
 }
 
 ## Use
@@ -208,6 +234,7 @@ echo "Repeated: '${myVal}'"
 - It's obviously a dangerous habit for a "normal" programming language, for a function to deliberately overwrite the input with output - but none of this is "normal". Remember the balance we're trying to strike, noted above.
 - More verbose for caller.
 - Necessarily cannot protect caller's scope from the function's side-effects, by invoking in a subshell. (But which is slower.)
+- You have to take extreme care to avoid variable name collisions when calling nested functions that all take *nameref* variables at the same argument position, which may be common. (This is covered in the naming section of this guide.)
 
 **Use when**:
 - The output is obviously the same "thing" as the input, and callers would probably just wind up overwriting their own input variable themselves with the function output anyway, with little or no validation. (E.g. low-stakes string cleanup.) This arguably covers most typical Bash function use-cases.
@@ -221,9 +248,9 @@ echo "Repeated: '${myVal}'"
 ~~~
 ## Function
 fRepeat(){
-	local -n refVar=$1
+	local -n refVar_s7fb3=$1
 	local -r inputVal="$2"
-	refVar="${inputVal} ${inputVal}!"
+	refVar="${refVar_s7fb3} ${refVar_s7fb3}!"
 }
 
 ## Use
@@ -408,11 +435,24 @@ There may be specific appropriate use-cases though, especially involving long-ru
 			- And while the actual usage pattern would be much less verbose than that (only three lines in this case), in general this would be a solution to a problem I can't imagine any sane person or project having.
 
 
-## Loops...
+## Performance
 
-### ...and general performance considerations
+If you are writing a Bash script, you probably are already not too worried about raw performance.
 
-Regardless of the language, inside long-running loops are usually where performance is won or lost, and is generally the first place to look for performance problems (at least without proper profiling tools). This can be particularly true with Bash.
+However once you start looping over a large filesystem or array - especially involving a nested loop - you may suddenly grow *very* interested in performance, if you'd like the script to finish before the heat death of the universe.
+
+In that spirit, you are urged:
+
+- Don't worry about performance...
+
+	- other than what's inside a loop,
+	- or if the script itself is executed rapid-fire, continuously,
+	- or for toolbox functions that are relied upon heavily and potentially inside nested loops.
+
+- *Don't prematurely optimize*. Never optimize until you encounter an "unacceptable" performance problem. (Especially with Bash, you are already willing to "accept" *some* level of performance compromise, the moment you decided to write a Bash script.)
+	- That said, this doesn't mean you can't be aware of likely sources of performance issues as you are coding (e.g. inside loops), and take low-to-no-cost steps to make it easier to address them in the future. (Such as adding comments pointing out potential chokepoints, and/or grouping them together if convenient.)
+
+Regardless of the language, inside long-running loops and nests of loops, are usually where performance is won or lost; and is generally the first place to look for performance problems (at least without proper profiling tools). This can be particularly true with Bash.
 
 While Bash loops can be surprisingly fast for an interpreted scripting language that does no read-ahead optimization or just-in-time compilation, it's trivially easy to accidentally do things inside a loop - that would otherwise seem perfectly reasonable - that can bring performance to its knees.
 
@@ -454,6 +494,9 @@ In rough approximate order of inner-loop performance killing-ness:
 		- The cost to readability by inlining everything usually isn't worth it. Everything is a tradeoff.
 	- ✅ If you do call functions for code clarity and organization, make an effort to minimize the arguments copied by value, if called within a highly iterative loop.
 		- Either the function should intentionally have access to caller's variables (which it will anyway if not invoked in a subshell), or pass the variables by *nameref*. The latter helps with separation of concerns, while neither provides much isolation and safety.
+
+
+## Loops...
 
 <!--
 
