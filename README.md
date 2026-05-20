@@ -32,7 +32,7 @@
 -->
 
 <!-- TOC ignore:true -->
-# Bash 5 ultimate guide
+# Bash 5 Ultimate Guide
 
 This isn't like many coding guides, that cover all the ways you *can* do everything in a language.
 
