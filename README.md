@@ -514,7 +514,7 @@ In rough approximate order of inner-loop performance killing-ness:
 
 	- ✅ Instead, gather up all the changes in one or more strings (or better yet arrays), then perform the file I/O all at once, outside the loop.
 
-- ❌ **Adding to associative arrays inside a loop**: Associative arrays are an invaluable recent feature to Bash. Lookups are highly optimized an in N(1) linear time. But adding to them gets expensive, fast.
+- ❌ **Adding to associative arrays inside a loop**: Associative arrays are an invaluable recent feature to Bash. Lookups are highly optimized an in O(1) linear time. But adding to them gets expensive, fast.
 
 - ❌ **Appending data incrementally to large strings millions of times**: Avoid.
 
